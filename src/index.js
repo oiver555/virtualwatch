@@ -19,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(75, size.width / size.height, 0.1, 10
 camera.position.z = 10
 const controls = new OrbitControls(camera, canvas)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, })
-
+renderer.setPixelRatio(window.devicePixelRatio)
 const dracoLoader = new DRACOLoader()
 dracoLoader.setDecoderPath('/draco/')
 const gltfLoader = new GLTFLoader()
@@ -33,6 +33,10 @@ canvasFlaketexture.wrapS = THREE.RepeatWrapping;
 canvasFlaketexture.wrapT = THREE.RepeatWrapping;
 canvasFlaketexture.repeat.x = 20;
 canvasFlaketexture.repeat.y = 20;
+
+const boxGeo = new THREE.BoxGeometry(5, 5, 5)
+const norMat = new THREE.MeshNormalMaterial()
+const mesh = new THREE.Mesh(boxGeo, norMat)
 
 
 
@@ -50,7 +54,7 @@ const material = new THREE.MeshPhysicalMaterial({
 const dial_mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
 const text_mat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide })
 const crown_mat = new THREE.MeshPhysicalMaterial({
-    color: 0x111111,
+    color: 0xffffff,
     metalness: material.metalness,
     roughness: material.roughness,
     envMapIntensity: material.envMapIntensity,
@@ -58,6 +62,29 @@ const crown_mat = new THREE.MeshPhysicalMaterial({
     normalMap: canvasFlaketexture,
     normalScale: material.normalScale,
 })
+const marker_mat = new THREE.MeshBasicMaterial({
+    color: 0x111111,
+
+})
+const second_mat = new THREE.MeshBasicMaterial({
+    color: 0x111111,
+})
+const glass_mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1,
+    opacity: 1,
+    metalness: 0,
+    roughness: 0,
+    ior: 1,
+    thickness: 2,
+    specularIntensity: 1,
+    specularColor: 0xffffff,
+    envMapIntensity: 1,
+
+})
+
+const helper = new THREE.GridHelper()
+// scene.add(helper)
 
 const Hour_Markers_grp = new THREE.Group()
 const Minute_Markers_grp = new THREE.Group()
@@ -82,10 +109,12 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
 
 
     scene.add(gltf.scene)
+
     controls.target
     gltf.scene.traverse(item => {
 
         if (item.name === "Dial_Text_grp") {
+
             Dial_Text_grp = item
 
         }
@@ -102,6 +131,7 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
 
         }
         if (item.name === "Subdial_Hand_grp") {
+
             Subdial_Hand_grp = item
 
         }
@@ -176,7 +206,9 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
         }
     })
     Bezel_grp.traverse(item => {
-        if (item.isMesh) {
+        if (item.isMesh && item.name.includes("LED")) {
+            item.material = dial_mat
+        } else {
             item.material = material
         }
     })
@@ -188,13 +220,23 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
 
     Markers_grp.traverse(item => {
         if (item.isMesh && item.name === "Hour_MarkersPIV") {
-            console.log(item, Markers_grp)
-            // Hour_Markers_grp.position.copy(Markers_grp.position)
+            mesh.position.copy(item.position)
+            item.position.set(0, 0, 0)
+            item.material = marker_mat
+            // scene.add(mesh)
             Hour_Markers_grp.add(item)
-
         } else if (item.isMesh && item.name === "Second_Markers1PIV") {
+
+            mesh.position.copy(item.position)
+            item.position.set(0, 0, 0)
+            item.material = second_mat
+            // scene.add(mesh)
             Second_Markers_grp.add(item)
         } else if (item.isMesh && item.name === "Minute_MarkersPIV") {
+            mesh.position.copy(item.position)
+            item.position.set(0, 0, 0)
+            // item.material = second_mat
+            // scene.add(mesh)
             Minute_Markers_grp.add(item)
         }
 
@@ -208,11 +250,15 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
 
     Crown_grp.traverse(item => {
         if (item.isMesh) {
-            console.log(item.name)
             item.material = crown_mat
         }
     })
 
+    Crystal_grp.traverse(item => {
+        if (item.isMesh) {
+            item.material = glass_mat
+        }
+    })
     scene.add(
         Dial_Text_grp,
         Subdial_Markers_grp,
@@ -244,6 +290,7 @@ const speckleFinish = () => {
     material.roughness = 0.2
     material.metalness = 1.0
     material.needsUpdate = true
+    renderer.toneMapping = THREE.ReinhardToneMapping
     canvasFlaketexture.needsUpdate = true
     crown_mat.needsUpdate = true
 }
@@ -255,6 +302,7 @@ const polishFinish = () => {
     canvasFlaketexture.repeat.x = 0
     canvasFlaketexture.repeat.y = 0
     material.roughness = 0
+    renderer.toneMapping = THREE.ReinhardToneMapping
     material.metalness = 1.0
     material.needsUpdate = true
     canvasFlaketexture.needsUpdate = true
@@ -271,6 +319,7 @@ const brushFinish = () => {
     material.roughness = .4
     material.metalness = 1.0
     material.needsUpdate = true
+    renderer.toneMapping = THREE.ReinhardToneMapping
     crown_mat.needsUpdate = true
     canvasFlaketexture.needsUpdate = true
 }
@@ -294,10 +343,10 @@ const matteFinish = () => {
 const debugFunc = {
     speckleFinish, polishFinish, brushFinish, matteFinish
 }
-gui.add(canvasFlaketexture.repeat, "x").min(0).max(100).onChange(() => canvasFlaketexture.needsUpdate = true, crown_mat.needsUpdate = true).name("Flakes X")
-gui.add(canvasFlaketexture.repeat, "y").min(0).max(100).onChange(() => canvasFlaketexture.needsUpdate = true, crown_mat.needsUpdate = true).name("Flakes Y")
-gui.add(material.normalScale, "x").min(0).max(1).step(.01).onChange(() => material.needsUpdate = true, crown_mat.needsUpdate = true).name("Normal Scale x")
-gui.add(material.normalScale, "y").min(0).max(1).step(.01).onChange(() => material.needsUpdate = true, crown_mat.needsUpdate = true).name("Normal Scale Y")
+// gui.add(canvasFlaketexture.repeat, "x").min(0).max(100).onChange(() => canvasFlaketexture.needsUpdate = true, crown_mat.needsUpdate = true).name("Flakes X")
+// gui.add(canvasFlaketexture.repeat, "y").min(0).max(100).onChange(() => canvasFlaketexture.needsUpdate = true, crown_mat.needsUpdate = true).name("Flakes Y")
+// gui.add(material.normalScale, "x").min(0).max(1).step(.01).onChange(() => material.needsUpdate = true, crown_mat.needsUpdate = true).name("Normal Scale x")
+// gui.add(material.normalScale, "y").min(0).max(1).step(.01).onChange(() => material.needsUpdate = true, crown_mat.needsUpdate = true).name("Normal Scale Y")
 gui.add(debugFunc, "speckleFinish").name("Speckle Finish")
 gui.add(debugFunc, "polishFinish").name("Polish Finish")
 gui.add(debugFunc, "brushFinish").name("Brush Finish")
@@ -305,15 +354,14 @@ gui.add(debugFunc, "matteFinish").name("Matte Finish")
 gui.add(Hour_Markers_grp, "visible").name("Hour Markers Visibility")
 gui.add(Minute_Markers_grp, "visible").name("Minute Markers Visibility")
 gui.add(Second_Markers_grp, "visible").name("Second Markers Visibility")
+gui.add(glass_mat, "ior").name("Glass IOR").min(0).max(1).step(.01)
+gui.add(glass_mat, "thickness").name("Thickness IOR").min(0).max(1).step(.01)
+gui.add(glass_mat, "specularIntensity").name("Specular IOR").min(0).max(1).step(.01)
 
 // ENVIRONMENT
 rgbeLoader.load('/env/studio_small_07_2k_copy.hdr', (envMap) => {
 
     envMap.mapping = THREE.EquirectangularReflectionMapping
-
-    //   scene.background = envMap
-    // scene.environment = envMap
-
     material.envMap = envMap
 })
 
@@ -329,31 +377,33 @@ dirLight.position.set(5, 5, 5);
 scene.add(dirLight);
 
 
-const directionalLightHelper = new THREE.DirectionalLightHelper(dirLight, .5)
-scene.add(directionalLightHelper)
-const ambLight = new THREE.AmbientLight(0xffffff, 5)
-scene.add(ambLight)
+// const directionalLightHelper = new THREE.DirectionalLightHelper(dirLight, .5)
+// scene.add(directionalLightHelper)
+// const ambLight = new THREE.AmbientLight(0xffffff, 5)
+// scene.add(ambLight)
 
 
-gui.add(material, "clearcoat").min(0).max(1)
-gui.add(material, "envMapIntensity").min(0).max(100)
-gui.add(material, "roughness").min(0).max(1).step(.1)
-gui.add(material, "metalness").min(0).max(1).step(.1)
-gui.add(dirLight, "intensity").min(0).max(10).name("Directional Light Intensity")
-gui.add(ambLight, "intensity").min(0).max(10).name("Ambient Light Intensity")
+// gui.add(material, "clearcoat").min(0).max(1)
+// gui.add(material, "envMapIntensity").min(0).max(100)
+// gui.add(material, "roughness").min(0).max(1).step(.1)
+// gui.add(material, "metalness").min(0).max(1).step(.1)
+// gui.add(dirLight, "intensity").min(0).max(10).name("Directional Light Intensity")
+// gui.add(ambLight, "intensity").min(0).max(10).name("Ambient Light Intensity")
 
-gui.add(renderer, 'toneMapping', {
-    No: THREE.NoToneMapping,
-    Linear: THREE.LinearToneMapping,
-    Reinhard: THREE.ReinhardToneMapping,
-    Cineon: THREE.CineonToneMapping,
-    ACESFilmic: THREE.ACESFilmicToneMapping,
-})
+// gui.add(renderer, 'toneMapping', {
+//     No: THREE.NoToneMapping,
+//     Linear: THREE.LinearToneMapping,
+//     Reinhard: THREE.ReinhardToneMapping,
+//     Cineon: THREE.CineonToneMapping,
+//     ACESFilmic: THREE.ACESFilmicToneMapping,
+// })
 gui.addColor(dial_mat, "color").name("Dial Color")
 gui.addColor(text_mat, "color").name("Text Color")
 gui.addColor(crown_mat, "color").name("Crown Color")
+gui.addColor(marker_mat, "color").name("Hour Marker Color")
+gui.addColor(second_mat, "color").name("Seconds Marker Color")
 
-gui.add(renderer, "toneMappingExposure").step(.01).min(0).max(20)
+// gui.add(renderer, "toneMappingExposure").step(.01).min(0).max(20)
 const tick = () => {
     renderer.setSize(size.width, size.height)
     renderer.render(scene, camera)
