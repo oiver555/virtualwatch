@@ -354,9 +354,9 @@ gui.add(debugFunc, "matteFinish").name("Matte Finish")
 gui.add(Hour_Markers_grp, "visible").name("Hour Markers Visibility")
 gui.add(Minute_Markers_grp, "visible").name("Minute Markers Visibility")
 gui.add(Second_Markers_grp, "visible").name("Second Markers Visibility")
-gui.add(glass_mat, "ior").name("Glass IOR").min(0).max(1).step(.01)
-gui.add(glass_mat, "thickness").name("Thickness IOR").min(0).max(1).step(.01)
-gui.add(glass_mat, "specularIntensity").name("Specular IOR").min(0).max(1).step(.01)
+// gui.add(glass_mat, "ior").name("Glass IOR").min(0).max(1).step(.01)
+// gui.add(glass_mat, "thickness").name("Thickness IOR").min(0).max(1).step(.01)
+// gui.add(glass_mat, "specularIntensity").name("Specular IOR").min(0).max(1).step(.01)
 
 // ENVIRONMENT
 rgbeLoader.load('/env/studio_small_07_2k_copy.hdr', (envMap) => {
@@ -402,6 +402,7 @@ gui.addColor(text_mat, "color").name("Text Color")
 gui.addColor(crown_mat, "color").name("Crown Color")
 gui.addColor(marker_mat, "color").name("Hour Marker Color")
 gui.addColor(second_mat, "color").name("Seconds Marker Color")
+gui.addColor(glass_mat, "color").name("Glass Tint")
 
 // gui.add(renderer, "toneMappingExposure").step(.01).min(0).max(20)
 const tick = () => {
