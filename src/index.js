@@ -28,7 +28,7 @@ camera.position.y = 10
 camera.position.x = -20
 const controls = new OrbitControls(camera, canvas)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, })
-renderer.setPixelRatio(window.devicePixelRatio)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const dracoLoader = new DRACOLoader()
 dracoLoader.setDecoderPath('/draco/')
 const gltfLoader = new GLTFLoader()
@@ -414,8 +414,24 @@ gui.addColor(crown_mat, "color").name("Crown Color")
 gui.addColor(marker_mat, "color").name("Hour Marker Color")
 gui.addColor(second_mat, "color").name("Seconds Marker Color")
 gui.addColor(glass_mat, "color").name("Glass Tint")
-
 // gui.add(renderer, "toneMappingExposure").step(.01).min(0).max(20)
+
+window.addEventListener('resize', () => {
+
+    size.width = window.innerWidth
+    size.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
+
+
 const tick = () => {
     renderer.setSize(size.width, size.height)
     renderer.render(scene, camera)
