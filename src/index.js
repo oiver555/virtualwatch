@@ -5,6 +5,8 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader"
 import { FlakesTexture } from "three/examples/jsm/textures/FlakesTexture"
 import GUI from "lil-gui"
+import { logEvent } from 'firebase/analytics';
+import analytics from "./Firebase"
 
 
 const canvas = document.getElementById("webgl")
@@ -14,9 +16,16 @@ const size = {
     height: window.outerHeight
 }
 
+logEvent(analytics, 'page_view', {
+    page_location: 'Home',
+    page_path: 'Home',
+});
+
 const gui = new GUI
 const camera = new THREE.PerspectiveCamera(75, size.width / size.height, 0.1, 100)
 camera.position.z = 10
+camera.position.y = 10
+camera.position.x = -20
 const controls = new OrbitControls(camera, canvas)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, })
 renderer.setPixelRatio(window.devicePixelRatio)
@@ -109,6 +118,7 @@ gltfLoader.load("./models/gltf/Rollex.glb", (gltf) => {
 
 
     scene.add(gltf.scene)
+    camera.lookAt(gltf.scene.position.add(new THREE.Vector3(0, 200, 0)))
 
     controls.target
     gltf.scene.traverse(item => {
@@ -290,6 +300,7 @@ const speckleFinish = () => {
     material.roughness = 0.2
     material.metalness = 1.0
     material.needsUpdate = true
+
     renderer.toneMapping = THREE.ReinhardToneMapping
     canvasFlaketexture.needsUpdate = true
     crown_mat.needsUpdate = true
